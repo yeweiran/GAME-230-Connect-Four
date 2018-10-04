@@ -60,12 +60,14 @@ int ShowMainMenu() {
 	}
 	return 0;
 }
-
+//Return 1 means playerX wins, -1 means playerO wins, 0 means nobody wins, 777 means both win draw(in remove mode)
 int CheckWin() {
 	int temp = 0;
 	int tempI = 0;
 	int tempJ = 0;
 	int rest = 0;
+	int playerXWin = 0;
+	int playerOWin = 0;
 	for (int i = 0; i < ROW; i++) {
 		for (int j = 0; j < COLUMN; j++) {
 			if (BOARD[i][j] != 0) {
@@ -87,7 +89,13 @@ int CheckWin() {
 						{
 							rest--;
 							if (rest == 1) {
-								return temp;
+								//return temp;
+								if (temp == -1) {
+									playerXWin = 1;
+								}
+								else {
+									playerOWin = 1;
+								}
 							}
 						}						
 					}
@@ -106,7 +114,13 @@ int CheckWin() {
 						{
 							rest--;
 							if (rest == 1) {
-								return temp;
+								//return temp;
+								if (temp == -1) {
+									playerXWin = 1;
+								}
+								else {
+									playerOWin = 1;
+								}
 							}
 						}
 					}
@@ -129,7 +143,13 @@ int CheckWin() {
 						{
 							rest--;
 							if (rest == 1) {
-								return temp;
+								//return temp;
+								if (temp == -1) {
+									playerXWin = 1;
+								}
+								else {
+									playerOWin = 1;
+								}
 							}
 						}
 					}
@@ -152,13 +172,28 @@ int CheckWin() {
 						{
 							rest--;
 							if (rest == 1) {
-								return temp;
+								//return temp;
+								if (temp == -1) {
+									playerXWin = 1;
+								}
+								else {
+									playerOWin = 1;
+								}
 							}
 						}
 					}
 				}
 			}
 		}
+	}
+	if (playerOWin && playerXWin) {
+		return 777;
+	}
+	else if (playerXWin) {
+		return -1;
+	}
+	else if (playerOWin) {
+		return 1;
 	}
 	return 0;
 }
@@ -209,6 +244,22 @@ int InsertPiece(int player, int column) {
 			depth--;
 		}
 	}
+	return 1;
+}
+//Return 0 means remove succeed, return 1 means remove failed
+int RemovePiece(int player, int column) {
+	int depth = ROW - 1;
+	if (BOARD[depth][column - 1] == player) {
+		while (depth > 0 || BOARD[depth][column - 1] != 0) {
+			BOARD[depth][column - 1] = BOARD[depth - 1][column - 1];
+			depth--;
+			if (depth == 0) {
+				BOARD[depth][column - 1] = 0;
+			}
+		}
+		return 0;
+	}
+	
 	return 1;
 }
 
@@ -287,6 +338,10 @@ int GameFunc() {
 			cout << "Game Over!Player O has won!\n";
 			break;
 		}
+		else if (winner == 777) {
+			cout << "Game Over!It is a draw since both players have won at the same time!\n";
+			break;
+		}
 		if (CheckDraw()) {
 			cout << "Game Over!This is a draw!\n";
 			break;
@@ -294,31 +349,52 @@ int GameFunc() {
 
 		player = (turn % 2) * 2 - 1;
 		if (player == -1) {
-			cout << "This is the Player X`s turn\nPlease enter the column number to insert a piece.\n>";
+			cout << "This is the Player X`s turn\nPlease enter the column number to insert a piece.\n";
 		}
 		if (player == 1) {
-			cout << "This is the Player O`s turn\nPlease enter the column number to insert a piece.\n>";
+			cout << "This is the Player O`s turn\nPlease enter the column number to insert a piece.\n";
 		}
+
+		if (mode == REMOVE) {
+			cout << "Or, Enter \"-\" plus the the column number to remove a piece.\n";
+		}
+
+		cout << ">";
 		
 		while (true) {
 			cin >> columnNum;
-			if (cin.fail() || columnNum < 1 || columnNum > COLUMN) {
+			if (cin.fail() || !((columnNum >= 1 && columnNum <= COLUMN) || (mode == REMOVE && (columnNum >= -COLUMN && columnNum <= -1)))) {
 				cout << "Invalid input, please try again.\n";
 				cin.clear();
 				cin.ignore(1000, '\n');
 				cout << ">";
 			}
 			else {
-				if (InsertPiece(player, columnNum)) {
-					cout << "This column is full, please try again.\n";
-					cin.clear();
-					cin.ignore(1000, '\n');
-					cout << ">";
+				if (columnNum > 0) {
+					if (InsertPiece(player, columnNum)) {
+						cout << "This column is full, please try again.\n";
+						cin.clear();
+						cin.ignore(1000, '\n');
+						cout << ">";
+					}
+					else {
+						turn++;
+						break;
+					}
 				}
-				else {
-					turn++;
-					break;
+				else if (columnNum < 0) {
+					if (RemovePiece(player, -columnNum)) {
+						cout << "Cannot remove this piece, please try again.\n";
+						cin.clear();
+						cin.ignore(1000, '\n');
+						cout << ">";
+					}
+					else {
+						turn++;
+						break;
+					}
 				}
+				
 				
 			}
 		}
